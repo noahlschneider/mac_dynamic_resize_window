@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AMApplicationBuild</key>
+	<string>531</string>
+	<key>AMApplicationVersion</key>
+	<string>2.10</string>
+	<key>AMDocumentVersion</key>
+	<string>2</string>
+	<key>actions</key>
+	<array>
+		<dict>
+			<key>action</key>
+			<dict>
+				<key>AMAccepts</key>
+				<dict>
+					<key>Container</key>
+					<string>List</string>
+					<key>Optional</key>
+					<true/>
+					<key>Types</key>
+					<array>
+						<string>com.apple.applescript.object</string>
+					</array>
+				</dict>
+				<key>AMActionVersion</key>
+				<string>1.0.2</string>
+				<key>AMApplication</key>
+				<array>
+					<string>Automator</string>
+				</array>
+				<key>AMParameterProperties</key>
+				<dict>
+					<key>source</key>
+					<dict/>
+				</dict>
+				<key>AMProvides</key>
+				<dict>
+					<key>Container</key>
+					<string>List</string>
+					<key>Types</key>
+					<array>
+						<string>com.apple.applescript.object</string>
+					</array>
+				</dict>
+				<key>ActionBundlePath</key>
+				<string>/System/Library/Automator/Run AppleScript.action</string>
+				<key>ActionName</key>
+				<string>Run AppleScript</string>
+				<key>ActionParameters</key>
+				<dict>
+					<key>source</key>
+					<string>use framework "AppKit"use scripting additions-- Configuration parametersset wPercentage to 0.65set hPercentage to 1.0-- Initialize log stringset logStr to ""-- Get the front most window position &amp; size, including calculating position of bottom right corner of windowtell application "System Events"	set currentApplication to (first application process whose frontmost is true)	set applicationName to name of currentApplication	tell currentApplication		-- Throw error if application doesn't have a window		if not (exists of window 1) then			error "Cannot find window for " &amp; applicationName number 1001		end if		set currentWindow to window 1		tell currentWindow			set {windowX, windowY} to position			set {windowW, windowH} to size			set {windowX, windowY} to {(windowX + windowW), (windowY + windowH)}		end tell	end tellend tell-- Get the list of displaysset displayList to current application's NSScreen's screens()-- Throw error if there are not 1 or 2 displays connectedset displayCount to count of displayListif (displayCount ≠ 1 and displayCount ≠ 2) then	error "Only 1 or 2 displays supported" number 1001end if-- Iterate over displays getting position &amp; size, seperating primary &amp; secondary displaysset primaryX to missing valuerepeat with display in displayList	set frame to display's frame()	set {framePosition, frameSize} to frame	set {x, y} to framePosition	set {w, h} to frameSize	set visibleFrame to display's visibleFrame()	set {visibleFramePosition, visibleFrameSize} to visibleFrame	set {visibleX, visibleY} to visibleFramePosition	set {visibleW, visibleH} to visibleFrameSize	if x = 0 then		set {primaryX, primaryY, primaryW, primaryH} to {x, y, w, h}		set {primaryVisibleX, primaryVisibleY, primaryVisibleW, primaryVisibleH} to {visibleX, visibleY, visibleW, visibleH}	else		set {secondaryX, secondaryY, secondaryW, secondaryH} to {x, y, w, h}		set {secondaryVisibleX, secondaryVisibleY, secondaryVisibleW, secondaryVisibleH} to {visibleX, visibleY, visibleW, visibleH}	end ifend repeat-- Throw error if primary display not calculatedif primaryX is missing value then	error "Primary display not correctly detected" number 1002end if-- Set display and position based on which display window is onif displayCount = 1 then	set secondaryOffset to 0	set windowOn to "primary"	set {x, y, w, h} to {primaryX, primaryY, primaryW, primaryH}	set {visibleX, visibleY, visibleW, visibleH} to {primaryVisibleX, primaryVisibleY, primaryVisibleW, primaryVisibleH}else	set secondaryYOffset to (secondaryH - primaryH)	if (windowX &gt; primaryX and windowX ≤ (primaryX + primaryW)) then		set windowOn to "primary"		set {x, y, w, h} to {primaryX, primaryY, primaryW, primaryH}		set {visibleX, visibleY, visibleW, visibleH} to {primaryVisibleX, primaryVisibleY, primaryVisibleW, primaryVisibleH}		set windowY to windowY + secondaryYOffset	else		set windowOn to "secondary"		set {x, y, w, h} to {secondaryX, secondaryY, secondaryW, secondaryH}		set {visibleX, visibleY, visibleW, visibleH} to {secondaryVisibleX, secondaryVisibleY, secondaryVisibleW, secondaryVisibleH}	end ifend if-- Calculate new window size &amp; positionset newW to visibleW * wPercentageset newH to visibleH * hPercentageset xTopSpace to (visibleW - newW) / 2set newX to x + xTopSpaceset menuBarHeight to (h - visibleH - visibleY)set secondaryOffsetY to (primaryH - h)set yTopSpace to (visibleH - newH) / 2set newY to menuBarHeight + yTopSpace + secondaryOffsetY-- Apply new window size &amp; position (twice to ensure correct)tell application "System Events"	tell currentApplication		tell currentWindow			set size to {newW, newH}			set position to {newX, newY}			delay 0.1			set size to {newW, newH}			set position to {newX, newY}		end tell	end tellend tell-- Optional: Debuggingset logStr to logStr &amp; "Primary display bounds {total, visible}: {" &amp; primaryX &amp; ", " &amp; primaryY &amp; ", " &amp; primaryW &amp; ", " &amp; primaryH &amp; "}, {" &amp; primaryVisibleX &amp; ", " &amp; primaryVisibleY &amp; ", " &amp; primaryVisibleW &amp; ", " &amp; primaryVisibleH &amp; "}" &amp; returnif displayCount = 2 then	set logStr to logStr &amp; "Secondary display bounds {total, visible}: {" &amp; secondaryX &amp; ", " &amp; secondaryY &amp; ", " &amp; secondaryW &amp; ", " &amp; secondaryH &amp; "}, {" &amp; secondaryVisibleX &amp; ", " &amp; secondaryVisibleY &amp; ", " &amp; secondaryVisibleW &amp; ", " &amp; secondaryVisibleH &amp; "}" &amp; return	set logStr to logStr &amp; "Secondary display offset: " &amp; secondaryYOffset &amp; returnend ifset logStr to logStr &amp; "Current display bounds {total, visible}: {" &amp; x &amp; ", " &amp; y &amp; ", " &amp; w &amp; ", " &amp; h &amp; "}, {" &amp; visibleX &amp; ", " &amp; visibleY &amp; ", " &amp; visibleW &amp; ", " &amp; visibleH &amp; "}" &amp; returnset logStr to logStr &amp; "Current window bottom right coordinate: {" &amp; windowX &amp; ", " &amp; windowY &amp; "}" &amp; returnset logStr to logStr &amp; "Window on: " &amp; windowOn &amp; " display" &amp; returnset logStr to logStr &amp; "New window size: {" &amp; newW &amp; ", " &amp; newH &amp; "}" &amp; returnset logStr to logStr &amp; "New window position: {" &amp; newX &amp; ", " &amp; newY &amp; "}" &amp; returndo shell script "echo " &amp; logStr</string>
+				</dict>
+				<key>BundleIdentifier</key>
+				<string>com.apple.Automator.RunScript</string>
+				<key>CFBundleVersion</key>
+				<string>1.0.2</string>
+				<key>CanShowSelectedItemsWhenRun</key>
+				<false/>
+				<key>CanShowWhenRun</key>
+				<true/>
+				<key>Category</key>
+				<array>
+					<string>AMCategoryUtilities</string>
+				</array>
+				<key>Class Name</key>
+				<string>RunScriptAction</string>
+				<key>InputUUID</key>
+				<string>27774023-973A-4C37-8A71-0E4DEEDED031</string>
+				<key>Keywords</key>
+				<array>
+					<string>Run</string>
+				</array>
+				<key>OutputUUID</key>
+				<string>B83671C7-D7B0-4A0F-A7A5-796EEF6DBD0C</string>
+				<key>UUID</key>
+				<string>6F93ADEF-E675-48B1-B39D-908D7A94590B</string>
+				<key>UnlocalizedApplications</key>
+				<array>
+					<string>Automator</string>
+				</array>
+				<key>arguments</key>
+				<dict>
+					<key>0</key>
+					<dict>
+						<key>default value</key>
+						<string>on run {input, parameters}
+	
+	(* Your script goes here *)
+	
+	return input
+end run</string>
+						<key>name</key>
+						<string>source</string>
+						<key>required</key>
+						<string>0</string>
+						<key>type</key>
+						<string>0</string>
+						<key>uuid</key>
+						<string>0</string>
+					</dict>
+				</dict>
+				<key>isViewVisible</key>
+				<integer>1</integer>
+				<key>location</key>
+				<string>574.500000:368.000000</string>
+				<key>nibPath</key>
+				<string>/System/Library/Automator/Run AppleScript.action/Contents/Resources/Base.lproj/main.nib</string>
+			</dict>
+			<key>isViewVisible</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>connectors</key>
+	<dict/>
+	<key>workflowMetaData</key>
+	<dict>
+		<key>applicationBundleIDsByPath</key>
+		<dict/>
+		<key>applicationPaths</key>
+		<array/>
+		<key>inputTypeIdentifier</key>
+		<string>com.apple.Automator.nothing</string>
+		<key>outputTypeIdentifier</key>
+		<string>com.apple.Automator.nothing</string>
+		<key>presentationMode</key>
+		<integer>11</integer>
+		<key>processesInput</key>
+		<false/>
+		<key>serviceInputTypeIdentifier</key>
+		<string>com.apple.Automator.nothing</string>
+		<key>serviceOutputTypeIdentifier</key>
+		<string>com.apple.Automator.nothing</string>
+		<key>serviceProcessesInput</key>
+		<false/>
+		<key>systemImageName</key>
+		<string>NSActionTemplate</string>
+		<key>useAutomaticInputType</key>
+		<false/>
+		<key>workflowTypeIdentifier</key>
+		<string>com.apple.Automator.servicesMenu</string>
+	</dict>
+</dict>
+</plist>

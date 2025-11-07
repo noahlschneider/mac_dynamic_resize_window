@@ -2,6 +2,8 @@
 
 This project lets you **dynamically resize and center Mac windows to a chosen proportion of your screen**, adapting automatically to any display size. I use it to neatly center windows on my ultrawide monitor.
 
+![Example](example.png)
+
 This implementation uses:
 - **AppleScript** for the core script.
 - **Automator** to create a Quick Action.
